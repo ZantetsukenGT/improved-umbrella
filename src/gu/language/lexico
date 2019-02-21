@@ -1,0 +1,89 @@
+package gu.language;
+
+import java_cup.runtime.*;
+import java.util.LinkedList;
+
+%%
+
+%public
+%class Lexico
+%cup
+%unicode
+%line
+%column
+%ignorecase
+
+%init{ 
+    yyline = 1;
+%init} 
+
+D = [0-9]
+L = [A-Za-záéíóúÁÉÍÓÚ]
+
+Delimitador = [ ]
+Tabulador = \t
+
+Comentario = (\/\*[áéíóúÁÉÍÓÚ -.0-~\r\n\f\t]*\*\/)|(\/\/[áéíóúÁÉÍÓÚ -~\t]*)
+
+%{
+    public LinkedList<ErrorAnalisis> errores = new LinkedList<>();
+    public LinkedList<Symbol> simbolos = new LinkedList<>();
+
+    private void printSymbol(Symbol t)
+    {
+        System.out.println("Tipo: " + sym.terminalNames[t.sym] + ", Lexema: " + t.value + ", Linea: " + t.left + ", Columna: " + t.right);
+    }
+%}
+
+%%
+
+{Comentario}                                {}
+\"[^\"\n]*\"                                {Symbol t = new Symbol(sym.valorCadena,yyline,yycolumn,yytext().replaceAll("\"",""));/*printSymbol(t);*/ return t;}
+
+"String"                                    {Symbol t = new Symbol(sym.resString,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Int"                                       {Symbol t = new Symbol(sym.resInt,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"DefinirGlobales"                           {Symbol t = new Symbol(sym.resDefinirGlobales,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"GraficaBarras"                             {Symbol t = new Symbol(sym.resGraficaBarras,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"GraficaLineas"                             {Symbol t = new Symbol(sym.resGraficaLineas,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"DefinirXYLine"                             {Symbol t = new Symbol(sym.resDefinirXYLine,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Galeria"                                   {Symbol t = new Symbol(sym.resGaleria,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"ID"                                        {Symbol t = new Symbol(sym.resID,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Titulo"                                    {Symbol t = new Symbol(sym.resTitulo,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"EjeX"                                      {Symbol t = new Symbol(sym.resEjeX,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"EjeY"                                      {Symbol t = new Symbol(sym.resEjeY,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"PuntosXY"                                  {Symbol t = new Symbol(sym.resPuntosXY,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"TituloX"                                   {Symbol t = new Symbol(sym.resTituloX,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"TituloY"                                   {Symbol t = new Symbol(sym.resTituloY,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Nombre"                                    {Symbol t = new Symbol(sym.resNombre,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Color"                                     {Symbol t = new Symbol(sym.resColor,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Grosor"                                    {Symbol t = new Symbol(sym.resGrosor,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"Puntos"                                    {Symbol t = new Symbol(sym.resPuntos,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"{"                                         {Symbol t = new Symbol(sym.llaveAbierta,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"}"                                         {Symbol t = new Symbol(sym.llaveCerrada,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"("                                         {Symbol t = new Symbol(sym.parentAbierto,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+")"                                         {Symbol t = new Symbol(sym.parentCerrado,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"["                                         {Symbol t = new Symbol(sym.corcheteAbierto,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"]"                                         {Symbol t = new Symbol(sym.corcheteCerrado,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"¿"                                         {Symbol t = new Symbol(sym.interrogAbierto,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"?"                                         {Symbol t = new Symbol(sym.interrogCerrado,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+";"                                         {Symbol t = new Symbol(sym.puntoYComa,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+":"                                         {Symbol t = new Symbol(sym.dosPuntos,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+","                                         {Symbol t = new Symbol(sym.coma,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"="                                         {Symbol t = new Symbol(sym.signoIgual,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"+"                                         {Symbol t = new Symbol(sym.signoMas,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"-"                                         {Symbol t = new Symbol(sym.signoMenos,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"*"                                         {Symbol t = new Symbol(sym.signoPor,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+"/"                                         {Symbol t = new Symbol(sym.signoDividido,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+
+"\n"                                        {yycolumn = 1;}
+{Tabulador}                                 {yycolumn = 4 - yycolumn%4 + yycolumn - 1;}
+
+{Delimitador}                               {}
+({L}|_)({L}|{D}|_)*                         {Symbol t = new Symbol(sym.identificador,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+{D}+                                        {Symbol t = new Symbol(sym.valorEntero,yyline,yycolumn,yytext());/*printSymbol(t);*/ return t;}
+
+/* Cualquier Otro   ERROR LEXICO*/
+.   {
+        ErrorAnalisis nuevo = new ErrorAnalisis("Error Léxico", yytext(), "símbolo no válido", yyline, yycolumn);
+        errores.add(nuevo);
+    }

@@ -1,0 +1,206 @@
+package gu.language;
+
+import java_cup.runtime.*;
+import app.tree.*;
+import java.util.LinkedList;
+
+//Recuperacion de Errores
+
+parser code
+{:
+
+    public LinkedList<Declaracion> globales;
+    public LinkedList<Grafica> graficas;
+    public LinkedList<Galeria> galerias;
+    
+    public LinkedList<ErrorAnalisis> errores = new LinkedList<>();
+
+    public void syntax_error(Symbol s)
+    {
+        ErrorAnalisis e = new ErrorAnalisis("Error Sintáctico",s.value.toString(),"no se esperaba este símbolo",s.left,s.right);
+        errores.add(e);      
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {
+        ErrorAnalisis e = new ErrorAnalisis("Error Sintáctico Irrecuperable","","no se esperaba este símbolo: " + symbl_name_from_id(s.sym),s.left,s.right);
+        errores.add(e);
+    }
+:}
+
+terminal String valorEntero;
+terminal String valorCadena,identificador;
+terminal String resString,resInt,resDefinirGlobales,resGraficaBarras,resGraficaLineas,resDefinirXYLine,resGaleria;
+terminal String resID,resTitulo,resEjeX,resEjeY,resPuntosXY,resTituloX,resTituloY,resNombre,resColor;
+terminal String resGrosor,resPuntos;
+terminal String llaveAbierta,llaveCerrada,parentAbierto,parentCerrado,corcheteAbierto,corcheteCerrado;
+terminal String interrogAbierto,interrogCerrado,puntoYComa,dosPuntos,coma,signoIgual,signoMas,signoMenos;
+terminal String signoPor,signoDividido; 
+
+non terminal INICIO;
+non terminal LinkedList<Declaracion> DEFINIR_GLOBALES,VARIABLES;
+non terminal Declaracion VAR,TIPO;
+non terminal Valor VALOR_INICIAL,VALOR;
+
+non terminal LinkedList<Grafica> CUERPO;
+non terminal Grafica BLOQUE;
+non terminal LinkedList<Caracteristica> GRAFICA_BARRAS,GRAFICA_LINEAS,DEFINIR_XY_LINE;
+non terminal LinkedList<Caracteristica> L_CAR_BARRA,L_CAR_LINEA,L_CAR_XYLINE;
+non terminal Caracteristica CARACTERISTICA_BARRA,CARACTERISTICA_LINEA,CARACTERISTICA_XYLINE;
+
+non terminal LinkedList<Galeria> GALERIA,L_GALERIA;
+non terminal Galeria DECLARACION_GALERIA;
+non terminal LinkedList<Valor> L_GRAFICAS;
+
+non terminal LinkedList<Valor> ARREGLO,ITEMS_ARREGLO;
+non terminal Valor ITEM;
+
+non terminal Integer EXPRESION_ARITMETICA, F, D;
+
+precedence left signoIgual, dosPuntos;
+precedence left coma;
+precedence left signoMas, signoMenos;
+precedence left signoPor, signoDividido;
+precedence left parentAbierto, parentCerrado;
+
+
+start with INICIO;
+
+INICIO::=  
+    DEFINIR_GLOBALES:gl CUERPO:c GALERIA:g                      {:
+                                                                    globales = gl;
+                                                                    graficas = c;
+                                                                    galerias = g;
+                                                                :}
+ |  CUERPO:c GALERIA:g                                          {:
+                                                                    graficas = c;
+                                                                    galerias = g;
+                                                                :};
+
+DEFINIR_GLOBALES ::= 
+    resDefinirGlobales llaveAbierta VARIABLES:variables llaveCerrada   {:RESULT = variables;:};
+
+VARIABLES ::=   
+    VARIABLES:variables VAR:v                                   {:RESULT = variables; RESULT.add(v);:}
+ |  VAR:v                                                       {:RESULT = new LinkedList<>(); RESULT.add(v);:};
+
+VAR ::= 
+    TIPO:t identificador:id signoIgual VALOR_INICIAL:valor puntoYComa       {:  
+                                                                                RESULT = t;
+                                                                                t.setIdentificador(id);
+                                                                                t.setValor(valor);
+                                                                            :}
+ |  error:e puntoYComa;
+
+TIPO ::= 
+    resInt                                                      {:RESULT = new Declaracion(Declaracion.Tipo.ENTERO);:}
+ |  resString                                                   {:RESULT = new Declaracion(Declaracion.Tipo.STRING);:};
+
+VALOR_INICIAL ::=   
+    valorCadena:valor                                           {:RESULT = new Valor(valor, Valor.Tipo.STRING);:}
+ |  EXPRESION_ARITMETICA:valor                                  {:RESULT = new Valor(valor, Valor.Tipo.ENTERO);:}
+ |  error:e puntoYComa;
+
+VALOR ::=   
+    identificador:id                                            {:RESULT = new Valor(id, Valor.Tipo.IDENTIFICADOR);:}
+ |  valorCadena:cadena                                          {:RESULT = new Valor(cadena, Valor.Tipo.STRING);:}
+ |  EXPRESION_ARITMETICA:num                                    {:RESULT = new Valor(num, Valor.Tipo.ENTERO);:}
+ |  ARREGLO:arreglo                                             {:RESULT = new Valor(arreglo, Valor.Tipo.ARREGLO);:}
+ |  error:e puntoYComa;
+
+CUERPO ::=  
+    CUERPO:c BLOQUE:b                                           {:RESULT = c; RESULT.add(b);:}
+ |  BLOQUE:b                                                    {:RESULT = new LinkedList<>(); RESULT.add(b);:};
+
+BLOQUE ::=  
+    GRAFICA_BARRAS:g                                            {:RESULT = new Grafica(Grafica.Tipo.BARRA); RESULT.caracteristicas = g;:}
+ |  GRAFICA_LINEAS:g                                            {:RESULT = new Grafica(Grafica.Tipo.LINEA); RESULT.caracteristicas = g;:};
+
+GRAFICA_BARRAS ::= 
+    resGraficaBarras llaveAbierta L_CAR_BARRA:lista llaveCerrada    {:RESULT = lista;:};
+
+L_CAR_BARRA ::= 
+    L_CAR_BARRA:lista CARACTERISTICA_BARRA:c                        {:RESULT = lista; RESULT.add(c);:}
+ |  CARACTERISTICA_BARRA:c                                          {:RESULT = new LinkedList<>(); RESULT.add(c);:};
+
+GRAFICA_LINEAS ::= 
+    resGraficaLineas llaveAbierta L_CAR_LINEA:lista llaveCerrada    {:RESULT = lista;:};
+
+L_CAR_LINEA ::= 
+    L_CAR_LINEA:lista CARACTERISTICA_LINEA:c                        {:RESULT = lista; RESULT.add(c);:}
+ |  CARACTERISTICA_LINEA:c                                          {:RESULT = new LinkedList<>(); RESULT.add(c);:};
+
+CARACTERISTICA_BARRA ::=
+    resID dosPuntos VALOR:valor puntoYComa              {:RESULT = new Caracteristica(Caracteristica.Tipo.ID, valor);:}
+ |  resTitulo dosPuntos VALOR:valor puntoYComa          {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULO, valor);:}
+ |  resEjeX dosPuntos VALOR:valor puntoYComa            {:RESULT = new Caracteristica(Caracteristica.Tipo.EJEX, valor);:}
+ |  resEjeY dosPuntos VALOR:valor puntoYComa            {:RESULT = new Caracteristica(Caracteristica.Tipo.EJEY, valor);:}
+ |  resPuntosXY dosPuntos VALOR:valor puntoYComa        {:RESULT = new Caracteristica(Caracteristica.Tipo.PUNTOSXY, valor);:}
+ |  resTituloX dosPuntos VALOR:valor puntoYComa         {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULOX, valor);:}
+ |  resTituloY dosPuntos VALOR:valor puntoYComa         {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULOY, valor);:}
+ |  error:e puntoYComa;
+
+CARACTERISTICA_LINEA ::=  
+    resID dosPuntos VALOR:valor puntoYComa              {:RESULT = new Caracteristica(Caracteristica.Tipo.ID, valor);:}
+ |  resTitulo dosPuntos VALOR:valor puntoYComa          {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULO, valor);:}
+ |  resTituloX dosPuntos VALOR:valor puntoYComa         {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULOX, valor);:}
+ |  resTituloY dosPuntos VALOR:valor puntoYComa         {:RESULT = new Caracteristica(Caracteristica.Tipo.TITULOY, valor);:}
+ |  DEFINIR_XY_LINE:valor                               {:RESULT = new Caracteristica(Caracteristica.Tipo.DEFINIRXYLINE, new Valor(valor, Valor.Tipo.XYLINE));:}
+ |  error:e puntoYComa;
+
+DEFINIR_XY_LINE ::= 
+    resDefinirXYLine interrogAbierto L_CAR_XYLINE:lista interrogCerrado     {:RESULT = lista;:};
+
+L_CAR_XYLINE ::=    
+    L_CAR_XYLINE:lista CARACTERISTICA_XYLINE:c                  {:RESULT = lista; RESULT.add(c);:}
+ |  CARACTERISTICA_XYLINE:c                                     {:RESULT = new LinkedList<>(); RESULT.add(c);:};
+
+CARACTERISTICA_XYLINE ::=  
+    resNombre dosPuntos VALOR:valor puntoYComa          {:RESULT = new Caracteristica(Caracteristica.Tipo.NOMBRE, valor);:}
+ |  resColor dosPuntos VALOR:valor puntoYComa           {:RESULT = new Caracteristica(Caracteristica.Tipo.COLOR, valor);:}
+ |  resGrosor dosPuntos VALOR:valor puntoYComa          {:RESULT = new Caracteristica(Caracteristica.Tipo.GROSOR, valor);:}
+ |  resPuntos dosPuntos VALOR:valor puntoYComa          {:RESULT = new Caracteristica(Caracteristica.Tipo.PUNTOS, valor);:}
+ |  error:e puntoYComa;
+
+GALERIA ::= 
+    resGaleria llaveAbierta L_GALERIA:lista llaveCerrada        {:RESULT = lista;:};
+
+L_GALERIA ::=   
+    L_GALERIA:lista DECLARACION_GALERIA:g                       {:RESULT = lista; RESULT.add(g);:}
+ |  DECLARACION_GALERIA:g                                       {:RESULT = new LinkedList<>(); RESULT.add(g);:};
+
+DECLARACION_GALERIA ::= 
+    resGaleria parentAbierto VALOR:id coma L_GRAFICAS:lista parentCerrado puntoYComa     {:RESULT = new Galeria(id, lista);:}
+ |  error:e puntoYComa;
+
+L_GRAFICAS ::=  
+    L_GRAFICAS:lista coma VALOR:id                       {:RESULT = lista; RESULT.add(id);:}
+ |  VALOR:id                                             {:RESULT = new LinkedList<>(); RESULT.add(id);:};
+
+ARREGLO ::= 
+    corcheteAbierto ITEMS_ARREGLO:lista corcheteCerrado         {:RESULT = lista;:};
+
+ITEMS_ARREGLO ::=   
+    ITEMS_ARREGLO:lista coma ITEM:item                          {:RESULT = lista; RESULT.add(item);:}
+ |  ITEM:item                                                   {:RESULT = new LinkedList<>(); RESULT.add(item);:};
+
+ITEM ::=    
+    llaveAbierta VALOR:num1 coma VALOR:num2 llaveCerrada        {:
+                                                                    LinkedList<Valor> nuevo = new LinkedList<>(); nuevo.add(num1); nuevo.add(num2);
+                                                                    RESULT = new Valor(nuevo, Valor.Tipo.ARREGLO);
+                                                                :}
+ |  VALOR:valor                                                 {:RESULT = valor;:};
+
+EXPRESION_ARITMETICA ::= 
+    EXPRESION_ARITMETICA:num1 signoMas F:num2                   {:RESULT = num1 + num2;:}
+ |  EXPRESION_ARITMETICA:num1 signoMenos F:num2                 {:RESULT = num1 - num2;:}
+ |  F:num                                                       {:RESULT = num;:};
+
+F ::=   
+    F:num1 signoPor D:num2                                      {:RESULT = num1 * num2;:}
+ |  F:num1 signoDividido D:num2                                 {:RESULT = num1 / num2;:}
+ |  D:num                                                       {:RESULT = num;:};
+
+D ::=   
+    valorEntero:valor                                           {:RESULT = Integer.valueOf(valor);:}
+ |  parentAbierto EXPRESION_ARITMETICA:valor parentCerrado      {:RESULT = valor;:};
